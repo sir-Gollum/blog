@@ -210,6 +210,17 @@ a:focus {
     outline-color: #e85a3d;
 }
 
+// Don't draw the focus outline around images (it looks like a border around
+// the photo when opening the lightbox). lightGallery focuses the link on
+// click, which browsers treat as :focus-visible, so we can't rely on that
+// guard. Note: footer.html swaps the `lightgallery` class for `lg-local-item`
+// on local galleries at runtime, so we match gallery links by container
+// (covers both) plus a.lightgallery for standalone Markdown images.
+.image-gallery a:focus,
+a.lightgallery:focus {
+    outline: none;
+}
+
 // Fix alignment of post titles and headers - override .special and .archive classes
 .single-title,
 .single-subtitle,
@@ -278,4 +289,96 @@ footer {
 .highlight .animate__flash {
     animation-name: single-flash !important;
     animation-duration: 0.4s !important;
+}
+
+// ==============================
+// Embedded image sizing
+// Cap images at (almost) the viewport height so tall / portrait photos never
+// overflow the screen. The aspect ratio is preserved and the full-resolution
+// image is still one click away (opens in the lightGallery carousel).
+// Applies to plain Markdown images (`![](img.jpg " ")`) and gallery images.
+// Change $content-image-max-height to adjust the ceiling (95vh = viewport - 5%).
+// ==============================
+$content-image-max-height: 95vh;
+
+.single .content {
+    // Standalone Markdown images. max-width: 100% is inherited from the theme;
+    // width/height: auto + max-height let the browser shrink both dimensions
+    // proportionally so the image fits the viewport height without distortion.
+    img {
+        width: auto;
+        height: auto;
+        max-height: $content-image-max-height;
+    }
+
+    // The theme forces figure images to width: 100%, which would make
+    // max-height stretch them horizontally. width: auto restores proportional
+    // scaling so the height cap shrinks the width to match.
+    figure img {
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+// ==============================
+// Compact thumbnail gallery ({{< gallery >}} shortcode)
+// First image is shown large (hero); the rest render as a thumbnail strip below.
+// Click any image to open the lightGallery carousel. Selectors are class-agnostic
+// so this works for both global (.lightgallery) and local (.lg-local-item) items.
+// ==============================
+.image-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+
+    > a {
+        display: block;
+        flex: 0 0 auto;
+        margin: 0;
+        line-height: 0;
+
+        img {
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        &:hover img {
+            transform: scale(1.03);
+            filter: brightness(1.05);
+        }
+    }
+
+    // Hero: first image. Sized like a standalone Markdown image so the two
+    // look consistent: scaled to fit the column width and capped at the same
+    // viewport height, always showing the whole image (aspect ratio preserved).
+    > a:first-child {
+        flex: 0 0 100%;
+
+        img {
+            display: block;
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            max-height: $content-image-max-height;
+            object-fit: contain;
+            border-radius: 8px;
+            margin: 0 auto;
+        }
+
+        // Don't scale the full-width hero on hover (would overflow).
+        &:hover img {
+            transform: none;
+            filter: brightness(1.05);
+        }
+    }
+
+    // Thumbnails: every image after the first.
+    > a:not(:first-child) img {
+        height: 70px;
+        width: auto;
+        max-width: 120px;
+    }
 }

@@ -1,0 +1,18 @@
+{{- /*
+    Local override of LoveIt's markdown image render hook.
+
+    Identical output to the theme's version, but routes images through
+    partials/optimize-img.html so plain Markdown images (![alt](src "title"))
+    are resized / format-converted via Hugo's image pipeline, gated by the
+    site-wide `imageOptimize` flipper (front matter overrides site default).
+*/ -}}
+{{- if .Title -}}
+    <figure>
+        {{- dict "Page" .Page "Src" .Destination "Title" .Text "Caption" .Title "Linked" true "Resources" .Page.Resources | partial "optimize-img.html" -}}
+        <figcaption class="image-caption">
+            {{- .Title | safeHTML -}}
+        </figcaption>
+    </figure>
+{{- else -}}
+    {{- dict "Page" .Page "Src" .Destination "Title" .Text "Resources" .Page.Resources | partial "optimize-img.html" -}}
+{{- end -}}

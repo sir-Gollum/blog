@@ -1,0 +1,44 @@
+{{- /*
+    Shared image-optimization helper used by the gallery shortcode and the
+    markdown image render hook. Resizes a processable page-bundle image into
+    responsive variants (thumbnail / display / lightbox) via Hugo's image
+    pipeline, then delegates rendering to the theme's plugin/img.html.
+
+    Expected dict keys:
+        Page      (required) the page, for reading site params / front matter
+        Src       (required) image path/URL (as written by the author)
+        Resources (required) the page resources to resolve Src against
+        Title, Caption, Linked, Class, Alt  passed through to plugin/img.html
+        Optimize  (optional) explicit bool override; when nil it is resolved
+                  from front matter `imageOptimize` then [params.page]
+                  imageOptimize (default true)
+
+    Non-image, SVG, external (URL) or unresolved sources fall back to being
+    served as-is. Sources are never upscaled.
+*/ -}}
+{{- $page := .Page -}}
+{{- $optimize := .Optimize -}}
+{{- if eq $optimize nil -}}
+    {{- $optimize = $page.Params.imageOptimize | default ($page.Site.Params.page.imageOptimize | default true) -}}
+{{- end -}}
+{{- $fmt := $page.Site.Params.page.imageFormat | default "webp" -}}
+{{- if eq (lower $fmt) "auto" -}}{{- $fmt = "" -}}{{- end -}}
+{{- $thumbW := int ($page.Site.Params.page.imageThumbWidth | default 500) -}}
+{{- $viewW := int ($page.Site.Params.page.imageViewWidth | default 1200) -}}
+{{- $largeW := int ($page.Site.Params.page.imageLargeWidth | default 2400) -}}
+
+{{- $args := dict "Src" .Src "Title" .Title "Caption" .Caption "Linked" .Linked "Class" .Class "Alt" .Alt "Resources" .Resources -}}
+{{- if $optimize -}}
+    {{- $r := dict "Path" .Src "Resources" .Resources | partial "function/resource.html" -}}
+    {{- if and $r (eq $r.ResourceType "image") (ne $r.MediaType.SubType "svg") -}}
+        {{- $tw := cond (lt $r.Width $thumbW) $r.Width $thumbW -}}
+        {{- $vw := cond (lt $r.Width $viewW) $r.Width $viewW -}}
+        {{- $lw := cond (lt $r.Width $largeW) $r.Width $largeW -}}
+        {{- $suffix := cond (ne $fmt "") (printf " %s" $fmt) "" -}}
+        {{- $thumb := $r.Resize (printf "%dx%s" $tw $suffix) -}}
+        {{- $view := $r.Resize (printf "%dx%s" $vw $suffix) -}}
+        {{- $large := $r.Resize (printf "%dx%s" $lw $suffix) -}}
+        {{- $args = dict "Src" $view.RelPermalink "SrcSmall" $thumb.RelPermalink "SrcLarge" $large.RelPermalink "Width" $view.Width "Height" $view.Height "Title" .Title "Caption" .Caption "Linked" .Linked "Class" .Class "Alt" .Alt "Resources" .Resources -}}
+    {{- end -}}
+{{- end -}}
+{{- $args | partial "plugin/img.html" -}}

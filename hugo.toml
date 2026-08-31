@@ -187,6 +187,17 @@ defaultContentLanguage = "en"
     # false is a necessary configuration (https://github.com/dillonzq/LoveIt/issues/158)
     noClasses = false
 
+# Global image processing defaults used by Hugo's image pipeline
+# (https://gohugo.io/content-management/image-processing/). Processed images are
+# cached under resources/_gen and have their EXIF/GPS metadata stripped.
+[imaging]
+  # default JPEG/WebP quality (1-100) for resized images
+  quality = 82
+  # resampling filter: Lanczos gives the best quality for downscaling
+  resampleFilter = "Lanczos"
+  # anchor used when cropping (Fill/Crop)
+  anchor = "Smart"
+
 
 [outputs]
     home = ["HTML", "RSS"]
@@ -277,7 +288,26 @@ defaultContentLanguage = "en"
     twemoji = false
     # whether to enable lightgallery
     # 是否使用 lightgallery
-    lightgallery = false
+    lightgallery = true
+    # gallery scope: false (default) groups every image on the page into one
+    # global lightgallery carousel; true makes each {{< gallery >}} shortcode an
+    # independent carousel. Overridable per page (front matter `galleryLocal`)
+    # or per shortcode (`{{< gallery local="true" >}}`).
+    galleryLocal = false
+    # image optimization: true (default) resizes source photos into responsive,
+    # format-converted variants (thumbnail / display / lightbox) via Hugo's
+    # image pipeline instead of serving the originals. Applies to both
+    # {{< gallery >}} images and plain Markdown images. Overridable per page
+    # (front matter `imageOptimize`) or, for galleries, per shortcode
+    # (`{{< gallery optimize="false" >}}`).
+    imageOptimize = true
+    # output format for optimized images ("webp", "jpg", "png", "auto"; "auto"
+    # keeps the source format). WebP is smallest for photos.
+    imageFormat = "webp"
+    # target widths (px) for the generated variants; sources are never upscaled.
+    imageThumbWidth = 500   # bottom thumbnail strip
+    imageViewWidth = 1200   # inline / displayed image
+    imageLargeWidth = 2400  # full-size opened in the lightbox
     # whether to enable the ruby extended syntax
     # 是否使用 ruby 扩展语法
     ruby = true

@@ -63,4 +63,41 @@
        </div>
    </footer>
 {{- end -}}
+{{- /* Independent (per-shortcode) lightGallery carousels for galleries rendered
+       in "local" mode. Runs before the theme's global #content instance (this
+       partial is parsed ahead of assets.html), so we detach local items from it
+       and wire up one lightGallery per wrapper. */ -}}
+<script>
+(function () {
+    var locals = document.querySelectorAll('.image-gallery[data-gallery-local]');
+    if (!locals.length) return;
+    // Detach local items from the theme's single #content carousel.
+    locals.forEach(function (g) {
+        g.querySelectorAll('a.lightgallery').forEach(function (a) {
+            a.classList.remove('lightgallery');
+            a.classList.add('lg-local-item');
+        });
+    });
+    function initLocal() {
+        if (typeof lightGallery === 'undefined') return;
+        locals.forEach(function (g) {
+            lightGallery(g, {
+                plugins: [lgThumbnail, lgZoom],
+                selector: '.lg-local-item',
+                speed: 400,
+                hideBarsDelay: 2000,
+                allowMediaOverlap: true,
+                exThumbImage: 'data-thumbnail',
+                toggleThumb: true,
+                thumbWidth: 80,
+                thumbHeight: '60px',
+                actualSize: false,
+                showZoomInOutIcons: true
+            });
+        });
+    }
+    if (document.readyState !== 'loading') initLocal();
+    else document.addEventListener('DOMContentLoaded', initLocal, false);
+})();
+</script>
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "07b5c3261a2f43529d59c82c6bc4cdf3"}'></script>

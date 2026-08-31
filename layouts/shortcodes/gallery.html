@@ -1,0 +1,63 @@
+{{- /*
+    Compact thumbnail gallery that opens the LoveIt lightGallery carousel on click.
+
+    Usage (one image per line, optional "| caption" after the src):
+
+        {{< gallery >}}
+        pokemon.jpeg | Pokémon in the pre-flight safety video
+        temple.jpg   | A temple in Kyoto
+        market.jpg
+        {{< /gallery >}}
+
+    Every image is forced to be "linked", so all of them join the post gallery
+    regardless of whether a markdown title is present.
+
+    Scope (global vs local carousel), most specific wins:
+        1. shortcode param: {{< gallery local="true" >}} / local="false"
+        2. page front matter: galleryLocal = true|false
+        3. site default: [params.page] galleryLocal in hugo.toml (falls back to false)
+
+    In local mode the gallery is wrapped with `data-gallery-local` and a unique
+    id; footer.html then initialises an independent lightGallery per wrapper.
+
+    Image optimization (resize + format conversion via Hugo's image pipeline) is
+    handled by partials/optimize-img.html and gated by the site-wide
+    `imageOptimize` flipper. Precedence, most specific wins:
+        1. shortcode param: {{< gallery optimize="true" >}} / optimize="false"
+        2. page front matter: imageOptimize = true|false
+        3. site default: [params.page] imageOptimize in hugo.toml (falls back to true)
+*/ -}}
+{{- $page := .Page -}}
+
+{{- /* --- resolve carousel scope --- */ -}}
+{{- $local := $page.Params.galleryLocal | default (.Site.Params.page.galleryLocal | default false) -}}
+{{- $l := .Get "local" | default "" -}}
+{{- if ne $l "" -}}
+    {{- $local = or (eq $l true) (eq (lower (printf "%v" $l)) "true") -}}
+{{- end -}}
+
+{{- /* --- resolve per-shortcode optimize override ("" = inherit page/site) --- */ -}}
+{{- $optimize := "" -}}
+{{- $o := .Get "optimize" | default "" -}}
+{{- if ne $o "" -}}
+    {{- $optimize = or (eq $o true) (eq (lower (printf "%v" $o)) "true") -}}
+{{- end -}}
+
+<div class="image-gallery{{ if $local }} gallery-local{{ end }}"{{ if $local }} data-gallery-local id="gallery-{{ .Ordinal }}"{{ end }}>
+{{- range $line := split (trim .Inner "\n") "\n" -}}
+    {{- $line = trim $line " \t\r" -}}
+    {{- if $line -}}
+        {{- $parts := split $line "|" -}}
+        {{- $src := trim (index $parts 0) " \t" -}}
+        {{- $caption := "" -}}
+        {{- if gt (len $parts) 1 -}}
+            {{- $caption = trim (index $parts 1) " \t" -}}
+        {{- end -}}
+        {{- $args := dict "Page" $page "Src" $src "Caption" $caption "Linked" true "Resources" $page.Resources -}}
+        {{- if ne $optimize "" -}}
+            {{- $args = merge $args (dict "Optimize" $optimize) -}}
+        {{- end -}}
+        {{- $args | partial "optimize-img.html" -}}
+    {{- end -}}
+{{- end -}}
+</div>
