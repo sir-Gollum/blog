@@ -24,7 +24,7 @@ help:
 .PHONY: serve
 ## Serve locally with live reload
 serve:
-	hugo serve --cleanDestinationDir --forceSyncStatic --ignoreCache --noHTTPCache  --disableFastRender --renderToMemory --buildDrafts
+	hugo serve --cleanDestinationDir --forceSyncStatic --noHTTPCache --disableFastRender --renderToMemory --buildDrafts
 
 .PHONY: new-post
 ## Create a new blog post
